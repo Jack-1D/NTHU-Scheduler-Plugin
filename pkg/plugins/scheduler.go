@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 
 	v1 "k8s.io/api/core/v1"
@@ -92,7 +93,12 @@ func (cs *CustomScheduler) Score(ctx context.Context, state *framework.CycleStat
 	// TODO
 	// 1. retrieve the node allocatable memory
 	// 2. return the score based on the scheduler mode
-	// nodeInfo, err := cs.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
+	nodeInfo, _ := cs.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
+	if cs.scoreMode == "Most" {
+		return nodeInfo.Allocatable.Memory, nil
+	} else if cs.scoreMode == "Least" {
+		return -nodeInfo.Allocatable.Memory, nil
+	}
 
 	return 0, nil
 }
@@ -101,7 +107,19 @@ func (cs *CustomScheduler) Score(ctx context.Context, state *framework.CycleStat
 func (cs *CustomScheduler) NormalizeScore(ctx context.Context, state *framework.CycleState, pod *v1.Pod, scores framework.NodeScoreList) *framework.Status {
 	// TODO
 	// find the range of the current score and map to the valid range
-
+	var maxNode, minNode int64
+	maxNode, minNode = math.MinInt64, math.MaxInt64
+	for _, nodeScore := range scores {
+		if nodeScore.Score > maxNode {
+			maxNode = nodeScore.Score
+		}
+		if nodeScore.Score < minNode {
+			minNode = nodeScore.Score
+		}
+	}
+	for index, nodeScore := range scores {
+		scores[index].Score = framework.MinNodeScore + int64(float64(nodeScore.Score-minNode)/float64(maxNode-minNode)*float64(framework.MaxNodeScore-framework.MinNodeScore))
+	}
 	return nil
 }
 
