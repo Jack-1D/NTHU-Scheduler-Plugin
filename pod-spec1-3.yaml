@@ -14,9 +14,9 @@ spec:
     - containerPort: 80
     resources:
       requests:
-        memory: "100Mi"
+        memory: "2000Mi"
       limits:
-        memory: "100Mi"
+        memory: "2000Mi"
 ---
 apiVersion: v1
 kind: Pod
@@ -34,7 +34,7 @@ spec:
     - containerPort: 80
     resources:
       requests:
-        memory: "100Mi"
+        memory: "2000Mi"
       limits:
-        memory: "100Mi"
+        memory: "2000Mi"
     
